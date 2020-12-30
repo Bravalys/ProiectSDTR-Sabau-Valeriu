@@ -1,14 +1,17 @@
 import cv2,time,pandas
 import numpy as np
 from datetime import datetime
-#from firebase import firebase
+from firebase import firebase
 import os
 import pyrebase
 import json
+from pyfcm import FCMNotification
 # Incarcarea fisierului config pentru conectarea la firebase
 with open('config.json') as f:
     config = json.load(f)
-    
+with open('apikey.json') as f:
+    apikey = json.load(f)
+#print(apikey['apiKey'])
 # Initializarea camerei 
 cap = cv2.VideoCapture(0)
 cam_width = 720 
@@ -39,9 +42,21 @@ path_on_cloud="images/savedImage%d.jpg"
 # Initializarea conectiunii cu firebase
 firebase = pyrebase.initialize_app(config)
 storage = firebase.storage()
+#all_files = storage.child("images").list_files()
+#files = storage.list_files()
+#storage.delete("images/")
+files = storage.list_files()
+for file in files:
+    print("Un fisier a fost sters")
+    storage.delete(file.name)
+    
 db = firebase.database()
+db.child("Detections").remove()
+push_service = FCMNotification(api_key=apikey['apiKey'])
+apptoken = db.child("apptoken").get()
 
-while(True): 
+print(apptoken.val())
+while(True):
     
     succes1, frame1 = cap.read()
     # Conversia frame-ului 2 la gray
@@ -84,12 +99,26 @@ while(True):
     # Verificare daca e inceputul sau sfarsitul unei detectii de miscare
     if motion_list[-1] == 1 and motion_list[-2] == 0: 
         times.append(datetime.now())
-        data = {'Datetime':str(times[-1])}
-        db.child("Detections").push(data)
+        #data = {'Datetime':str(times[-1])}
+        #db.child("Detections").push(data)
 
         cv2.imwrite(filename % count_image, frame1)
 
         storage.child(path_on_cloud%count_image).put(filename%count_image)
+        imagine_url = storage.child(path_on_cloud%count_image).get_url(None)
+# Tokenul de aplicatiei pentru dispozitivul android si trimiterea notificarii
+        print(imagine_url)
+        images = {'imageUrl':str(imagine_url)}
+        db.child("Detections").push(images)
+        registration_id = apptoken.val()
+        message_title = "Atentie!"
+        message_body = "A fost detectata o miscare."
+        
+        extra_notification_kwargs = {
+            'image':  imagine_url
+            }
+        result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body,extra_notification_kwargs=extra_notification_kwargs )
+
         count_image += 1
         
     # Afisarea fereastra video
