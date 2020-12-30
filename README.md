@@ -5,3 +5,6 @@ Descriere: Proiectul consta in crearea unui sistem de securitate folosind: o cam
 1. MotionDetection.py  reprezinta elementul software care ruleaza pe Raspberry Pi si actioneaza camera web, prelucreaza imaginiile preluate de camera web si transmite mai departe prin Wi-Fi catre Firebase datele prelucrate.
 
 2. Time_of_movements.csv  reprezinta fisierul unde se salveaza fiecare inceput de detectie a miscarii, mai exact: Data si Ora.
+
+3. Aplicatia Android este alcatuita din fisierul: MyFirebaseInstanceIDService.java care reprezinta serviciul pentru primirea notificarilor pe aplicatia creata, fisierul: Model.java in care avem clasa unde stocam fiecare link al imaginii din Firebase, fisierul: MyAdapter.java care preia fiecare imagine si fisierul: MainActivity.java care reprezinta interfata si afisarea imaginilor.
+In folderul "layout" reprezinta obiectele de afisat pe interfata.
